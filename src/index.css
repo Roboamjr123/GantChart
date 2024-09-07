@@ -1,0 +1,45 @@
+/* @import '../node_modules/@syncfusion/ej2-base/styles/tailwind.css';
+@import '../node_modules/@syncfusion/ej2-buttons/styles/tailwind.css';
+@import '../node_modules/@syncfusion/ej2-calendars/styles/tailwind.css';
+@import '../node_modules/@syncfusion/ej2-dropdowns/styles/tailwind.css';
+@import '../node_modules/@syncfusion/ej2-gantt/styles/tailwind.css';
+@import '../node_modules/@syncfusion/ej2-grids/styles/tailwind.css';
+@import '../node_modules/@syncfusion/ej2-inputs/styles/tailwind.css';
+@import '../node_modules/@syncfusion/ej2-layouts/styles/tailwind.css';
+@import '../node_modules/@syncfusion/ej2-lists/styles/tailwind.css';
+@import '../node_modules/@syncfusion/ej2-navigations/styles/tailwind.css';
+@import '../node_modules/@syncfusion/ej2-popups/styles/tailwind.css';
+@import '../node_modules/@syncfusion/ej2-richtexteditor/styles/tailwind.css';
+@import '../node_modules/@syncfusion/ej2-treegrid/styles/tailwind.css'; */
+
+@import "../node_modules/@syncfusion/ej2/tailwind.css";
+
+@import url("https://fonts.googleapis.com/css?family=Inter:wght@306;408;508;600;700&display=swap");
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  html {
+    font-family: "Inter", sans-serif;
+    line-height: 1;
+  }
+  table {
+  }
+  th,
+  td {
+    @apply py-3 px-2.5 text-sm text-left border-y border-gray-200;
+  }
+  thead {
+    @apply bg-neutral-100;
+  }
+  th {
+    @apply font-semibold;
+  }
+  a {
+    @apply text-sky-500 hover:underline;
+  }
+}
+
+
