@@ -1,108 +1,177 @@
-import "../ganttSync/css/tailwind.css";
-
-import React, { useEffect, useState } from "react";
 import {
   GanttComponent,
   Inject,
-  Selection,
   Toolbar,
   Edit,
-  EditSettingsModel,
-  ToolbarItem,
   ColumnsDirective,
   ColumnDirective,
-  ColumnMenu,
+  Selection,
   Filter,
 } from "@syncfusion/ej2-react-gantt";
-import { GanttSyncData, taskFields } from "./data";
+import {
+  Task,
+  GetAllTask,
+  useAddTask,
+  useUpdateTask,
+  useDeleteTask,
+} from "./data";
+
+// Function to transform task data for Gantt
+function transformTaskData(tasks: Task[]) {
+  return tasks.map((task) => ({
+    TaskID: task.task_Id || 0,
+    TaskName: task.task_Name || "Unnamed Task",
+    PlannedStartDate: task.plannedStartDate
+      ? new Date(task.plannedStartDate)
+      : new Date(),
+    PlannedEndDate: task.plannedEndDate
+      ? new Date(task.plannedEndDate)
+      : new Date(),
+    ActualStartDate: task.actualStartDate
+      ? new Date(task.actualStartDate)
+      : new Date(),
+    ActualEndDate: task.actualEndDate
+      ? new Date(task.actualEndDate)
+      : new Date(),
+    Duration: task.duration || 0,
+    Progress: task.progress || 0,
+    project_Id: 6, // Add this line if needed
+  }));
+}
 
 const GanttSampleSync = () => {
-  const toolbarOptions: ToolbarItem[] = [
-    "Add",
-    "Edit",
-    "Delete",
-    "Cancel",
-    "Update",
-    "PrevTimeSpan",
-    "NextTimeSpan",
-    "ExpandAll",
-    "CollapseAll",
-    "Search",
-    "Indent",
-    "Outdent",
-    "ZoomIn",
-    "ZoomOut",
-    "ZoomToFit",
-  ];
+  // Fetch tasks using React Query
+  const { data: tasks, isLoading, isError, error } = GetAllTask();
+  const addTaskMutation = useAddTask();
+  const updateTaskMutation = useUpdateTask();
+  const deleteTaskMutation = useDeleteTask();
 
-  const editOptions: EditSettingsModel = {
-    allowAdding: true,
-    allowEditing: true,
-    allowDeleting: true,
+  // Transform tasks for Gantt
+  const ganttData = tasks ? transformTaskData(tasks) : [];
+
+  // Loading state
+  if (isLoading) {
+    return <div>Loading...</div>;
+  }
+
+  // Error state
+  if (isError) {
+    return <div>Error fetching tasks: {error.message}</div>;
+  }
+
+  const handleAddTask = async (newTask: Task) => {
+    try {
+      await addTaskMutation.mutateAsync(newTask);
+    } catch (error) {
+      console.error("Error adding task:", error);
+    }
   };
 
-  // Helper function to format date as 'MM dd, yyyy'
-  const formatDate = (date: Date): string => {
-    const options: Intl.DateTimeFormatOptions = {
-      year: "numeric",
-      month: "long",
-      day: "numeric",
-    };
-
-    return new Intl.DateTimeFormat("en-US", options).format(date);
+  const handleUpdateTask = async (updatedTask: Task) => {
+    try {
+      await updateTaskMutation.mutateAsync(updatedTask);
+    } catch (error) {
+      console.error("Error updating task:", error);
+    }
   };
 
-  // // Format dates in GanttSyncData
-  // const formattedGanttSyncData = GanttSyncData.map((task) => ({
-  //   ...task,
-  //   StartDate: formatDate(task.PlannedStartDate),
-  //   EndDate: formatDate(task.PlannedEndDate),
-  //   subtasks: task.subtasks.map((subtask) => ({
-  //     ...subtask,
-  //     StartDate: formatDate(subtask.PlannedStartDate),
-  //     EndDate: formatDate(subtask.PlannedEndDate),
-  //   })),
-  // }));
+  const handleDeleteTask = async (taskId: number) => {
+    try {
+      await deleteTaskMutation.mutateAsync(taskId);
+    } catch (error) {
+      console.error("Error deleting task:", error);
+    }
+  };
 
   return (
     <div className="p-5">
       <GanttComponent
-        loadingIndicator={{ indicatorType: "Shimmer" }}
-        dataSource={GanttSyncData}
-        taskFields={taskFields}
-        height="450px"
-        timelineSettings={{
-          timelineViewMode: "Week",
+        dataSource={ganttData}
+        taskFields={{
+          id: "TaskID", // Specify the primary key column
+          name: "TaskName",
+          startDate: "PlannedStartDate",
+          endDate: "PlannedEndDate",
+          baselineStartDate: "ActualStartDate",
+          baselineEndDate: "ActualEndDate",
+          duration: "Duration",
+          progress: "Progress",
         }}
-        splitterSettings={{ position: "50%" }}
+        height="450px"
+        toolbar={["Add", "Edit", "Delete", "Update", "Cancel", "Search"]}
+        enableImmutableMode={true}
         allowSelection={true}
-        toolbar={toolbarOptions}
-        // allowResizing={true}
-        highlightWeekends={true}
-        labelSettings={{ taskLabel: "${Progress}%", rightLabel: "TaskName" }}
-        baselineColor="orange"
-        renderBaseline={true}
-        // showColumnMenu={true}
+        editSettings={{
+          allowAdding: true,
+          allowEditing: true,
+          allowDeleting: true,
+          allowTaskbarEditing: true,
+          showDeleteConfirmDialog: true,
+          mode: "Dialog",
+        }}
+        actionComplete={(args) => {
+          if (args.requestType === "save" && args.data) {
+            const taskData = {
+              task_Id: args.data.TaskID,
+              task_Name: args.data.TaskName,
+              plannedStartDate: args.data.PlannedStartDate.toISOString(),
+              plannedEndDate: args.data.PlannedEndDate.toISOString(),
+              actualStartDate: args.data.ActualStartDate
+                ? args.data.ActualStartDate.toISOString()
+                : null,
+              actualEndDate: args.data.ActualEndDate
+                ? args.data.ActualEndDate.toISOString()
+                : null,
+              duration: args.data.Duration,
+              progress: args.data.Progress,
+              project_Id: args.data.project_Id || 5,
+            };
 
-        editSettings={editOptions}
+            if (args.data.TaskID) {
+              handleUpdateTask(taskData); // Update existing task
+            } else {
+              handleAddTask(taskData); // Add new task
+            }
+          } else if (args.requestType === "delete" && args.data) {
+            handleDeleteTask(args.data.TaskID); // Delete task
+          }
+        }}
       >
-        <Inject services={[Toolbar, Selection, Filter, Edit]} />
         <ColumnsDirective>
-          {/* <ColumnDirective field="TaskID" headerText="ID" /> */}
-          <ColumnDirective field="TaskName" headerText="Name" />
+          <ColumnDirective
+            field="TaskID" // Primary Key
+            headerText="Task ID"
+            isPrimaryKey={true} // Set this property to true
+            visible={false} // Optional: hide if not needed in UI
+          />
+          <ColumnDirective
+            field="TaskName"
+            headerText="Task Name"
+            width="250"
+            allowFiltering={true}
+          />
           <ColumnDirective
             field="PlannedStartDate"
-            format="MMMM d, yyyy"
             headerText="Start Date"
+            format="MM/dd/yyyy"
+            allowFiltering={true}
           />
           <ColumnDirective
             field="PlannedEndDate"
-            format="MMMM d, yyyy"
             headerText="End Date"
-            allowEditing
+            format="MM/dd/yyyy"
+            allowFiltering={true}
           />
-          <ColumnDirective field="Week" headerText="Duration (Days)" allowEditing={false} />
+
+          <ColumnDirective
+            field="Duration"
+            headerText="Duration"
+            format="N0"
+            allowFiltering={true}
+          />
+          {/* Add more columns as needed */}
         </ColumnsDirective>
+        <Inject services={[Toolbar, Edit, Selection, Filter]} />
       </GanttComponent>
     </div>
   );

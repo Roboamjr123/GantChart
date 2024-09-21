@@ -1,22 +1,35 @@
 import { BrowserRouter as Router, Route, Routes } from "react-router-dom";
-import Layout from "./components/shared/Layout";
-import Dashoard from "./components/Dashoard";
-import Products from "./components/Products";
-import GanttSample from "./page/gantt/GanttSample";
 import GanttSampleSync from "./page/ganttSync/GanttSampleSync";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+
+const queryClient = new QueryClient();
 
 function App() {
+  // return (
+  //   <Router>
+  //     <Routes>
+  //       {/* <Route path="/" element={<Layout />}>
+  //         <Route index element={<Dashoard />}></Route>
+  //         <Route path="products" element={<Products />}></Route>
+  //       </Route>
+  //       <Route path="login" element={<div>this is login page</div>}></Route> */}
+  //       <QueryClientProvider client={queryClient}>
+  //         <GanttSampleSync />
+  //       </QueryClientProvider>
+  //     </Routes>
+  //   </Router>
+  // );
+
   return (
-    <Router>
-      <Routes>
-        {/* <Route path="/" element={<Layout />}>
-          <Route index element={<Dashoard />}></Route>
-          <Route path="products" element={<Products />}></Route>
-        </Route>
-        <Route path="login" element={<div>this is login page</div>}></Route> */}
-        <Route path="/" element={<GanttSampleSync />} />
-      </Routes>
-    </Router>
+    // Wrap the entire Router and Routes in the QueryClientProvider
+    <QueryClientProvider client={queryClient}>
+      <Router>
+        <Routes>
+          <Route path="" element={<GanttSampleSync />} />
+          {/* <Route path="/another" element={<AnotherComponent />} /> */}
+        </Routes>
+      </Router>
+    </QueryClientProvider>
   );
 }
 
